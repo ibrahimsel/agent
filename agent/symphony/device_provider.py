@@ -20,7 +20,7 @@ import json
 from typing import Any
 
 from ..deployment_manager import DeploymentManager
-from ..device_config import DeviceConfig
+from ..config import AgentConfig
 from ..heartbeat import HeartbeatConfig, HeartbeatManager
 from ..release_spec import parse_release_payload
 from symphony_sdk.api_client import SymphonyAPI, SymphonyAPIError
@@ -36,7 +36,7 @@ from symphony_sdk.types import State
 
 
 class MutoDeviceProvider(SymphonyProvider):
-    def __init__(self, config: DeviceConfig, manager: DeploymentManager, logger) -> None:
+    def __init__(self, config: AgentConfig, manager: DeploymentManager, logger) -> None:
         self._config = config
         self._manager = manager
         self._logger = logger
@@ -302,9 +302,9 @@ class MutoDeviceProvider(SymphonyProvider):
                 },
             }
             self._api_client.register_target(symphony.target_name, payload)
-            self._logger.info("Symphony target registered: %s", symphony.target_name)
+            self._logger.info(f"Symphony target registered: {symphony.target_name}")
         except SymphonyAPIError as exc:
-            self._logger.error("Symphony auto-register failed: %s", exc)
+            self._logger.error(f"Symphony auto-register failed: {exc}")
 
     def _extract_stack_payload(  # noqa: PLR0911
         self,

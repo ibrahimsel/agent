@@ -18,7 +18,7 @@ import unittest
 from pathlib import Path
 
 from agent.deployment_manager import DeploymentManager
-from agent.device_config import DeviceConfig, DownloadConfig, ExecutorConfig, StorageConfig
+from agent.config import AgentConfig, DownloadConfig, ExecutorConfig, StorageConfig
 from agent.release_spec import ArtifactSpec, ReleaseSpec, RuntimeSpec
 
 
@@ -46,7 +46,7 @@ class TestDeploymentManager(unittest.TestCase):
             archive = _create_archive(tmp_dir, "release.tar.gz")
             checksum = _sha256(archive)
 
-            config = DeviceConfig(
+            config = AgentConfig(
                 device_id="device-1",
                 storage=StorageConfig(root_dir=tmp_dir),
                 downloads=DownloadConfig(retries=1, timeout_seconds=5, backoff_seconds=0.1),
@@ -80,7 +80,7 @@ class TestDeploymentManager(unittest.TestCase):
             archive = _create_archive(tmp_dir, "release.tar.gz")
             checksum = _sha256(archive)
 
-            config = DeviceConfig(
+            config = AgentConfig(
                 device_id="device-1",
                 storage=StorageConfig(root_dir=tmp_dir),
                 downloads=DownloadConfig(retries=1, timeout_seconds=5, backoff_seconds=0.1),

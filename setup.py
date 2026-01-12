@@ -27,7 +27,6 @@ setup(
     entry_points={
         'console_scripts': [
             'muto_agent = agent.muto_agent:main',
-            'muto_device_agent = agent.device_agent:main',
             'mqtt = agent.mqtt:main',
             'commands = agent.commands:main',
             'symphony_provider = agent.symphony.symphony_provider:main'

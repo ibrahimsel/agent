@@ -96,9 +96,7 @@ class HeartbeatManager:
         self._shutdown_event.clear()
         self._thread = threading.Thread(target=self._heartbeat_loop, daemon=True)
         self._thread.start()
-        self._logger.info(
-            "Heartbeat started with interval %ss", self._config.interval_seconds
-        )
+        self._logger.info(f"Heartbeat started with interval {self._config.interval_seconds}s")
 
     def stop(self) -> None:
         """Stop the heartbeat background thread."""
@@ -121,7 +119,7 @@ class HeartbeatManager:
                 status = self._collect_status()
                 self._report_status(status)
             except Exception as exc:
-                self._logger.error("Heartbeat error: %s", exc)
+                self._logger.error(f"Heartbeat error: {exc}")
 
             self._shutdown_event.wait(timeout=self._config.interval_seconds)
 
@@ -136,7 +134,7 @@ class HeartbeatManager:
                 stack_status = self._manager.get_status(stack_name)
                 stacks[stack_name] = stack_status
         except Exception as exc:
-            self._logger.warning("Failed to collect stack status: %s", exc)
+            self._logger.warning(f"Failed to collect stack status: {exc}")
 
         return DeviceStatus(
             device_id=self._device_id,
@@ -153,7 +151,7 @@ class HeartbeatManager:
             try:
                 self._status_callback(status)
             except Exception as exc:
-                self._logger.warning("Status callback failed: %s", exc)
+                self._logger.warning(f"Status callback failed: {exc}")
 
         # Report via Symphony API if available
         if self._api_client:
@@ -162,4 +160,4 @@ class HeartbeatManager:
                     self._device_id, status_dict
                 )
             except Exception as exc:
-                self._logger.debug("Symphony status update failed: %s", exc)
+                self._logger.debug(f"Symphony status update failed: {exc}")

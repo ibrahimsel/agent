@@ -25,7 +25,7 @@ import time
 from dataclasses import dataclass
 
 from .artifact import download_with_checksum, extract_archive
-from .device_config import DeviceConfig
+from .config import AgentConfig
 from .executor import CommandExecutor, ProcessHandle
 from .release_spec import ArtifactSpec, ReleaseSpec, RuntimeSpec
 from .state_store import StateStore, _utc_now
@@ -55,8 +55,8 @@ class StackPaths:
 
 
 class DeploymentManager:
-    def __init__(self, config: DeviceConfig, logger) -> None:
-        print("Initializing DeploymentManager with config:", config)
+    def __init__(self, config: AgentConfig, logger) -> None:
+        logger.info("Initializing DeploymentManager")
         self._config = config
         self._logger = logger
         self._executor = CommandExecutor()
@@ -295,7 +295,7 @@ class DeploymentManager:
         store: StateStore,
         reason: str,
     ) -> DeploymentOutcome:
-        self._logger.error("Deployment failed for %s: %s", failed_release.name, reason)
+        self._logger.error(f"Deployment failed for {failed_release.name}: {reason}")
         if not previous_version:
             store.update_deployment_state("failed", failed_release.version, reason)
             return DeploymentOutcome("failed", reason, failed_release.version)
