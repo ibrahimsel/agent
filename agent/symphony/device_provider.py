@@ -23,15 +23,16 @@ from ..deployment_manager import DeploymentManager
 from ..device_config import DeviceConfig
 from ..heartbeat import HeartbeatConfig, HeartbeatManager
 from ..release_spec import parse_release_payload
-from .sdk.symphony_api import SymphonyAPIClient, SymphonyAPIError
-from .sdk.symphony_sdk import ComparisonPack, ComponentSpec, SymphonyProvider, to_dict
-from .sdk.symphony_summary import (
+from symphony_sdk.api_client import SymphonyAPI, SymphonyAPIError
+from symphony_sdk import ComparisonPack, ComponentSpec, to_dict
+from agent.symphony.symphony_provider import SymphonyProvider
+from symphony_sdk.summary import (
     ComponentResultSpec,
     SummarySpec,
     SummaryState,
     TargetResultSpec,
 )
-from .sdk.symphony_types import State
+from symphony_sdk.types import State
 
 
 class MutoDeviceProvider(SymphonyProvider):
@@ -39,7 +40,7 @@ class MutoDeviceProvider(SymphonyProvider):
         self._config = config
         self._manager = manager
         self._logger = logger
-        self._api_client: SymphonyAPIClient | None = None
+        self._api_client: SymphonyAPI | None = None
         self._component_registry: dict[str, dict[str, Any]] = {}
         self._heartbeat: HeartbeatManager | None = None
 
@@ -263,7 +264,7 @@ class MutoDeviceProvider(SymphonyProvider):
                 "responseTopic": f"{symphony.topic_prefix}/{symphony.response_topic}",
                 "timeoutSeconds": str(symphony.timeout_seconds),
             }
-            self._api_client = SymphonyAPIClient(
+            self._api_client = SymphonyAPI(
                 base_url=symphony.api_url,
                 username=symphony.mqtt.user,
                 password=symphony.mqtt.password,

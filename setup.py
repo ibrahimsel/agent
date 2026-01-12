@@ -14,7 +14,10 @@ setup(
         (os.path.join("share", package_name, "config"), glob("config/*.yaml")),
         (os.path.join("share", package_name, "launch"), glob("launch/*.launch.py")),
     ],
-    install_requires=['setuptools'],
+    install_requires=[
+        'setuptools',
+        'symphony-sdk',
+    ],
     zip_safe=True,
     maintainer='Composive Team',
     maintainer_email='info@composiv.ai',
