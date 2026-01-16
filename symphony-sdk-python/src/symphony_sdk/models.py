@@ -1,24 +1,8 @@
-#
-#  Copyright (c) 2025 Composiv.ai
-#
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the Eclipse Public License v2.0
-# and Eclipse Distribution License v1.0 which accompany this distribution.
-#
-# Licensed under the  Eclipse Public License v2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# The Eclipse Public License is available at
-#    http://www.eclipse.org/legal/epl-v20.html
-# and the Eclipse Distribution License is available at
-#   http://www.eclipse.org/org/documents/edl-v10.php.
-#
-# Contributors:
-#    Composiv.ai - initial API and implementation
-#
+"""Symphony SDK data structures and utilities.
 
-"""
-Symphony SDK data structures and utilities.
+Copyright (c) Microsoft Corporation.
+Licensed under the MIT license.
+SPDX-License-Identifier: MIT
 
 This module provides Symphony-compatible data structures and helpers
 following the official Eclipse Symphony COA patterns.
@@ -30,16 +14,17 @@ import json
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union, get_args, get_origin
+from typing import Any, Dict, List, Optional, get_args, get_origin
 
 from symphony_sdk.types import State
 
-
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ObjectMeta:
     """Object metadata following Kubernetes-style metadata."""
+
     namespace: str = ""
     name: str = ""
     labels: Optional[Dict[str, str]] = None
@@ -49,6 +34,7 @@ class ObjectMeta:
 @dataclass
 class TargetSelector:
     """Target selector for component binding."""
+
     name: str = ""
     selector: Optional[Dict[str, str]] = None
 
@@ -56,13 +42,16 @@ class TargetSelector:
 @dataclass
 class BindingSpec:
     """Binding specification for component deployment."""
+
     role: str = ""
     provider: str = ""
     config: Optional[Dict[str, str]] = None
 
+
 @dataclass
 class TopologySpec:
     """Topology specification for deployment."""
+
     device: str = ""
     selector: Optional[Dict[str, str]] = None
     bindings: Optional[List[BindingSpec]] = None
@@ -71,6 +60,7 @@ class TopologySpec:
 @dataclass
 class PipelineSpec:
     """Pipeline specification for data processing."""
+
     name: str = ""
     skill: str = ""
     parameters: Optional[Dict[str, str]] = None
@@ -79,6 +69,7 @@ class PipelineSpec:
 @dataclass
 class VersionSpec:
     """Version specification for solutions."""
+
     solution: str = ""
     percentage: int = 100
 
@@ -86,6 +77,7 @@ class VersionSpec:
 @dataclass
 class InstanceSpec:
     """Instance specification for Symphony deployments."""
+
     name: str = ""
     parameters: Optional[Dict[str, str]] = None
     solution: str = ""
@@ -103,9 +95,11 @@ class InstanceSpec:
 @dataclass
 class FilterSpec:
     """Filter specification for routing."""
+
     direction: str = ""
     parameters: Optional[Dict[str, str]] = None
     type: str = ""
+
 
 @dataclass
 class RouteSpec:
@@ -114,30 +108,33 @@ class RouteSpec:
     filters: List[FilterSpec] = None
     type: str = ""
 
+
 @dataclass
 class ComponentSpec:
-    name: str = ""   
+    name: str = ""
     type: str = ""
     routes: List[RouteSpec] = None
     constraints: str = ""
     properties: Dict[str, str] = None
-    depedencies: List[str] = None
+    dependencies: List[str] = None
     skills: List[str] = None
     metadata: Dict[str, str] = None
     parameters: Dict[str, str] = None
-    
+
 
 @dataclass
-class SolutionSpec:    
-    components: List[ComponentSpec] = None    
-    scope: str = ""    
+class SolutionSpec:
+    components: List[ComponentSpec] = None
+    scope: str = ""
     displayName: str = ""
-    metadata: Dict[str,str] = None
-    
+    metadata: Dict[str, str] = None
+
+
 @dataclass
 class SolutionState:
     metadata: ObjectMeta = None
     spec: SolutionSpec = None
+
 
 @dataclass
 class TargetSpec:
@@ -150,11 +147,13 @@ class TargetSpec:
     metadata: Dict[str, str] = None
     forceRedeploy: bool = False
 
+
 @dataclass
 class ComponentError:
     code: str = ""
     message: str = ""
-    target: str = ""    
+    target: str = ""
+
 
 @dataclass
 class TargetError:
@@ -163,12 +162,14 @@ class TargetError:
     target: str = ""
     details: Dict[str, ComponentError] = None
 
+
 @dataclass
 class ErrorType:
     code: str = ""
     message: str = ""
     target: str = ""
     details: Dict[str, TargetError] = None
+
 
 @dataclass
 class ProvisioningStatus:
@@ -179,11 +180,13 @@ class ProvisioningStatus:
     error: ErrorType = None
     output: Dict[str, str] = None
 
+
 @dataclass
 class TargetStatus:
     properties: Dict[str, str] = None
     provisioningStatus: ProvisioningStatus = None
     lastModififed: str = ""
+
 
 @dataclass
 class TargetState:
@@ -191,12 +194,14 @@ class TargetState:
     spec: TargetSpec = None
     status: TargetStatus = None
 
+
 @dataclass
 class DeviceSpec:
     properties: Dict[str, str] = None
     bindings: List[BindingSpec] = None
     displayName: str = ""
-    
+
+
 @dataclass
 class DeploymentSpec:
     solutionName: str = ""
@@ -206,15 +211,22 @@ class DeploymentSpec:
     devices: List[DeviceSpec] = None
     assignments: Dict[str, str] = None
     componentStartIndex: int = -1
-    componentEndIndex: int= -1
+    componentEndIndex: int = -1
     activeTarget: str = ""
 
     def get_components_slice(self) -> List[ComponentSpec]:
         if self.solution != None:
-            if self.componentStartIndex >= 0 and self.componentEndIndex >= 0 and self.componentEndIndex > self.componentStartIndex:
-                return self.solution.spec.components[self.componentStartIndex: self.componentEndIndex]
+            if (
+                self.componentStartIndex >= 0
+                and self.componentEndIndex >= 0
+                and self.componentEndIndex > self.componentStartIndex
+            ):
+                return self.solution.spec.components[
+                    self.componentStartIndex : self.componentEndIndex
+                ]
             return self.solution.spec.components
         return []
+
 
 @dataclass
 class ComparisonPack:
@@ -224,21 +236,20 @@ class ComparisonPack:
 
 @dataclass
 class COABodyMixin:
-    """
-    Common functionality for COA request and response body handling.
-    
+    """Common functionality for COA request and response body handling.
+
     Provides content-type aware body encoding/decoding with support for:
     - "application/json": JSON objects
     - "text/plain": Plain text strings
     - "application/octet-stream": Binary data
     """
+
     content_type: str = "application/json"
     body: str = ""  # Base64 encoded data (type determined by content_type)
-    
+
     def set_body(self, data: Any, content_type: Optional[str] = None) -> None:
-        """
-        Set body data with content type detection or explicit content type.
-        
+        """Set body data with content type detection or explicit content type.
+
         Args:
             data: Data to set (JSON object, string, or bytes)
             content_type: Optional explicit content type override
@@ -246,27 +257,27 @@ class COABodyMixin:
         # Set content type if provided
         if content_type:
             self.content_type = content_type
-        
+
         if self.content_type == "application/json":
             # Handle JSON data
             if isinstance(data, (str, bytes)):
                 # If it's a string/bytes, try to parse as JSON first
                 if isinstance(data, bytes):
-                    data = data.decode('utf-8')
+                    data = data.decode("utf-8")
                 json.loads(data)  # Validate JSON
-                self.body = base64.b64encode(data.encode('utf-8')).decode('utf-8')
+                self.body = base64.b64encode(data.encode("utf-8")).decode("utf-8")
             else:
                 # Serialize object to JSON
                 json_str = json.dumps(data, ensure_ascii=False)
-                self.body = base64.b64encode(json_str.encode('utf-8')).decode('utf-8')
-        
+                self.body = base64.b64encode(json_str.encode("utf-8")).decode("utf-8")
+
         elif self.content_type == "text/plain":
             # Handle plain text - no encoding necessary
             if isinstance(data, bytes):
-                self.body = data.decode('utf-8')
+                self.body = data.decode("utf-8")
             else:
                 self.body = str(data)
-        
+
         elif self.content_type == "application/octet-stream":
             # Handle binary data
             if isinstance(data, str):
@@ -274,72 +285,73 @@ class COABodyMixin:
                 self.body = data
             elif isinstance(data, bytes):
                 # Encode bytes to base64
-                self.body = base64.b64encode(data).decode('utf-8')
+                self.body = base64.b64encode(data).decode("utf-8")
             else:
-                raise ValueError(f"Binary content type requires bytes or base64 string, got {type(data)}")
-        
+                raise ValueError(
+                    f"Binary content type requires bytes or base64 string, got {type(data)}"
+                )
+
         else:
             # Default fallback - treat as text
             if isinstance(data, bytes):
-                text_str = data.decode('utf-8')
+                text_str = data.decode("utf-8")
             else:
                 text_str = str(data)
-            self.body = base64.b64encode(text_str.encode('utf-8')).decode('utf-8')
-    
+            self.body = base64.b64encode(text_str.encode("utf-8")).decode("utf-8")
+
     def get_body(self) -> Any:
-        """
-        Get body data decoded according to content type.
-        
+        """Get body data decoded according to content type.
+
         Returns:
             Decoded body data (JSON object, string, or bytes depending on content_type)
         """
         if not self.body:
             return None
-        
+
         if self.content_type == "application/json":
             # Return parsed JSON object
             try:
-                json_str = base64.b64decode(self.body).decode('utf-8')
+                json_str = base64.b64decode(self.body).decode("utf-8")
                 return json.loads(json_str)
             except (ValueError, json.JSONDecodeError) as e:
                 raise ValueError(f"Invalid JSON in body: {e}")
-        
+
         elif self.content_type == "text/plain":
             # Return text string directly - no decoding necessary
             return self.body
-        
+
         elif self.content_type == "application/octet-stream":
             # Return raw bytes
             return base64.b64decode(self.body)
-        
+
         else:
             # Default fallback - return as string
-            return base64.b64decode(self.body).decode('utf-8')
+            return base64.b64decode(self.body).decode("utf-8")
 
 
-@dataclass  
+@dataclass
 class COARequest(COABodyMixin):
-    """
-    COA Request structure based on Symphony COA API.
-    
+    """COA Request structure based on Symphony COA API.
+
     This corresponds to the Go struct COARequest from Symphony codebase.
     The body field contains base64 encoded data, with the content type determined by content_type:
     - "application/json": Base64 encoded UTF-8 string of JSON object
-    - "text/plain": Base64 encoded UTF-8 string of plain text  
+    - "text/plain": Base64 encoded UTF-8 string of plain text
     - "application/octet-stream": Base64 encoded binary data
     """
+
     method: str = "GET"
     route: str = ""
     metadata: Optional[Dict[str, str]] = field(default_factory=dict)
     parameters: Optional[Dict[str, str]] = field(default_factory=dict)
-    
+
     def to_json_dict(self) -> Dict[str, Any]:
         """Convert to JSON-serializable dictionary."""
         result = {
             "method": self.method,
             "route": self.route,
             "content-type": self.content_type,
-            "body": self.body
+            "body": self.body,
         }
         if self.metadata:
             result["metadata"] = self.metadata
@@ -350,43 +362,43 @@ class COARequest(COABodyMixin):
 
 @dataclass
 class COAResponse(COABodyMixin):
-    """
-    COA Response structure based on Symphony COA API.
-    
+    """COA Response structure based on Symphony COA API.
+
     This corresponds to the Go struct COAResponse from Symphony codebase.
     The body field contains base64 encoded data, with the content type determined by content_type:
     - "application/json": Base64 encoded UTF-8 string of JSON object
-    - "text/plain": Base64 encoded UTF-8 string of plain text  
+    - "text/plain": Base64 encoded UTF-8 string of plain text
     - "application/octet-stream": Base64 encoded binary data
     """
+
     state: State = State.OK
     metadata: Optional[Dict[str, str]] = field(default_factory=dict)
     redirect_uri: Optional[str] = None
-    
+
     def to_json_dict(self) -> Dict[str, Any]:
         """Convert to JSON-serializable dictionary."""
-        result = {
-            "content-type": self.content_type,
-            "body": self.body,
-            "state": self.state.value
-        }
+        result = {"content-type": self.content_type, "body": self.body, "state": self.state.value}
         if self.metadata:
             result["metadata"] = self.metadata
         if self.redirect_uri:
             result["redirectUri"] = self.redirect_uri
         return result
-    
+
     @classmethod
-    def success(cls, data: Any = None, content_type: str = "application/json") -> 'COAResponse':
+    def success(cls, data: Any = None, content_type: str = "application/json") -> "COAResponse":
         """Create a success response."""
         response = cls(content_type=content_type, state=State.OK)
         if data is not None:
             response.set_body(data, content_type)
         return response
-    
+
     @classmethod
-    def error(cls, message: str, state: State = State.INTERNAL_ERROR, 
-              content_type: str = "application/json") -> 'COAResponse':
+    def error(
+        cls,
+        message: str,
+        state: State = State.INTERNAL_ERROR,
+        content_type: str = "application/json",
+    ) -> "COAResponse":
         """Create an error response."""
         response = cls(content_type=content_type, state=state)
         if content_type == "application/json":
@@ -396,14 +408,14 @@ class COAResponse(COABodyMixin):
         else:
             response.set_body({"error": message}, "application/json")
         return response
-    
+
     @classmethod
-    def not_found(cls, message: str = "Resource not found") -> 'COAResponse':
+    def not_found(cls, message: str = "Resource not found") -> "COAResponse":
         """Create a not found response."""
         return cls.error(message, State.NOT_FOUND)
-    
+
     @classmethod
-    def bad_request(cls, message: str = "Bad request") -> 'COAResponse':
+    def bad_request(cls, message: str = "Bad request") -> "COAResponse":
         """Create a bad request response."""
         return cls.error(message, State.BAD_REQUEST)
 
@@ -413,8 +425,8 @@ def to_dict(obj: Any) -> Dict[str, Any]:
     """Convert dataclass object to dictionary."""
     if obj is None:
         return {}
-    
-    if hasattr(obj, '__dict__'):
+
+    if hasattr(obj, "__dict__"):
         result = {}
         for key, value in obj.__dict__.items():
             if value is not None:
@@ -422,14 +434,14 @@ def to_dict(obj: Any) -> Dict[str, Any]:
                     result[key] = [to_dict(item) for item in value]
                 elif isinstance(value, dict):
                     result[key] = {k: to_dict(v) for k, v in value.items()}
-                elif hasattr(value, '__dict__'):
+                elif hasattr(value, "__dict__"):
                     result[key] = to_dict(value)
                 elif isinstance(value, Enum):
                     result[key] = value.value
                 else:
                     result[key] = value
         return result
-    
+
     return obj
 
 
@@ -437,24 +449,24 @@ def from_dict(data: Dict[str, Any], cls: type) -> Any:
     """Convert dictionary to dataclass object."""
     if not data:
         return cls()
-    
+
     try:
         # Handle enums
         if isinstance(cls, type) and issubclass(cls, Enum):
             return cls(data)
-        
+
         # Handle basic types
         if cls in (str, int, float, bool):
             return cls(data)
-        
+
         # Handle dataclass
-        if hasattr(cls, '__dataclass_fields__'):
+        if hasattr(cls, "__dataclass_fields__"):
             kwargs = {}
             for field_name, field_info in cls.__dataclass_fields__.items():
                 if field_name in data:
                     field_type = field_info.type
                     field_value = data[field_name]
-                    
+
                     # Handle Optional types
                     if get_origin(field_type) is Optional and type(None) in get_args(field_type):
                         if field_value is None:
@@ -462,33 +474,35 @@ def from_dict(data: Dict[str, Any], cls: type) -> Any:
                         else:
                             inner_type = field_type.__args__[0]
                             kwargs[field_name] = from_dict(field_value, inner_type)
-                    
+
                     # Handle List types
-                    elif hasattr(field_type, '__origin__') and field_type.__origin__ is list:
+                    elif hasattr(field_type, "__origin__") and field_type.__origin__ is list:
                         if field_value and isinstance(field_value, list):
                             inner_type = field_type.__args__[0]
-                            kwargs[field_name] = [from_dict(item, inner_type) for item in field_value]
+                            kwargs[field_name] = [
+                                from_dict(item, inner_type) for item in field_value
+                            ]
                         else:
                             kwargs[field_name] = field_value or []
-                    
+
                     # Handle Dict types
-                    elif hasattr(field_type, '__origin__') and field_type.__origin__ is dict:
+                    elif hasattr(field_type, "__origin__") and field_type.__origin__ is dict:
                         kwargs[field_name] = field_value or {}
-                    
+
                     # Handle nested dataclasses
-                    elif hasattr(field_type, '__dataclass_fields__'):
+                    elif hasattr(field_type, "__dataclass_fields__"):
                         kwargs[field_name] = from_dict(field_value, field_type)
-                    
+
                     # Handle enums
                     elif isinstance(field_type, type) and issubclass(field_type, Enum):
                         kwargs[field_name] = field_type(field_value)
-                    
+
                     else:
                         kwargs[field_name] = field_value
-            
+
             return cls(**kwargs)
-    
-    except Exception as e:
+
+    except Exception:
         # Fallback: return default instance
         return cls()
 
@@ -516,7 +530,7 @@ def deserialize_solution(json_str: str) -> List[SolutionState]:
         return []
 
 
-# Desrialize a DeploymentSpec object  from Json String 
+# Desrialize a DeploymentSpec object  from Json String
 def deserialize_deployment(json_str: str) -> List[DeploymentSpec]:
     """Deserialize JSON string to DeploymentSpec list."""
     try:
@@ -537,12 +551,12 @@ def deserialize_coa_request(json_str: str) -> COARequest:
     try:
         data = json.loads(json_str)
         request = COARequest()
-        
+
         # Map JSON fields to dataclass fields
         if "method" in data:
             request.method = data["method"]
         if "route" in data:
-            request.route = data["route"]  
+            request.route = data["route"]
         if "content-type" in data:
             request.content_type = data["content-type"]
         if "body" in data:
@@ -557,7 +571,7 @@ def deserialize_coa_request(json_str: str) -> COARequest:
             request.metadata = data["metadata"]
         if "parameters" in data:
             request.parameters = data["parameters"]
-            
+
         return request
     except Exception as e:
         logger.error("Error deserializing COA request: %s", e)
@@ -574,7 +588,7 @@ def deserialize_coa_response(json_str: str) -> COAResponse:
     try:
         data = json.loads(json_str)
         response = COAResponse()
-        
+
         # Map JSON fields to dataclass fields
         if "content-type" in data:
             response.content_type = data["content-type"]
@@ -595,7 +609,7 @@ def deserialize_coa_response(json_str: str) -> COAResponse:
             response.metadata = data["metadata"]
         if "redirectUri" in data:
             response.redirect_uri = data["redirectUri"]
-            
+
         return response
     except Exception as e:
         logger.error("Error deserializing COA response: %s", e)
@@ -603,39 +617,39 @@ def deserialize_coa_response(json_str: str) -> COAResponse:
 
 
 __all__ = [
-    'ObjectMeta',
-    'TargetSelector',
-    'BindingSpec',
-    'TopologySpec',
-    'PipelineSpec',
-    'VersionSpec',
-    'InstanceSpec',
-    'FilterSpec',
-    'RouteSpec',
-    'ComponentSpec',
-    'SolutionSpec',
-    'SolutionState',
-    'TargetSpec',
-    'ComponentError',
-    'TargetError',
-    'ErrorType',
-    'ProvisioningStatus',
-    'TargetStatus',
-    'TargetState',
-    'DeviceSpec',
-    'DeploymentSpec',
-    'ComparisonPack',
-    'COABodyMixin',
-    'COARequest',
-    'COAResponse',
-    'to_dict',
-    'from_dict',
-    'serialize_components',
-    'deserialize_components',
-    'deserialize_solution',
-    'deserialize_deployment',
-    'serialize_coa_request',
-    'deserialize_coa_request',
-    'serialize_coa_response',
-    'deserialize_coa_response',
+    "ObjectMeta",
+    "TargetSelector",
+    "BindingSpec",
+    "TopologySpec",
+    "PipelineSpec",
+    "VersionSpec",
+    "InstanceSpec",
+    "FilterSpec",
+    "RouteSpec",
+    "ComponentSpec",
+    "SolutionSpec",
+    "SolutionState",
+    "TargetSpec",
+    "ComponentError",
+    "TargetError",
+    "ErrorType",
+    "ProvisioningStatus",
+    "TargetStatus",
+    "TargetState",
+    "DeviceSpec",
+    "DeploymentSpec",
+    "ComparisonPack",
+    "COABodyMixin",
+    "COARequest",
+    "COAResponse",
+    "to_dict",
+    "from_dict",
+    "serialize_components",
+    "deserialize_components",
+    "deserialize_solution",
+    "deserialize_deployment",
+    "serialize_coa_request",
+    "deserialize_coa_request",
+    "serialize_coa_response",
+    "deserialize_coa_response",
 ]
