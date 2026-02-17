@@ -18,8 +18,11 @@ import threading
 
 # Third-party imports
 import rclpy
-from muto_msgs.msg import Gateway, MutoActionMeta, Thing, ThingHeaders
+from muto_msgs.msg import Gateway, GraphDrift, GraphEvent, MutoActionMeta, Thing, ThingHeaders
 from paho.mqtt.client import MQTTMessage
+from rclpy.qos import QoSDurabilityPolicy, QoSProfile, QoSReliabilityPolicy
+from std_msgs.msg import String as StringMsg
+
 from paho.mqtt.packettypes import PacketTypes
 from paho.mqtt.properties import Properties
 
@@ -61,6 +64,11 @@ class MQTT(BaseNode):
         self._sub_agent = None
         self._pub_thing = None
 
+        # Graph state bridge subscribers
+        self._sub_graph_state = None
+        self._sub_graph_drift = None
+        self._sub_graph_events = None
+
     def _do_initialize(self) -> None:
         """Initialize the MQTT gateway components."""
         try:
@@ -99,6 +107,9 @@ class MQTT(BaseNode):
         self._pub_agent = self.create_publisher(Gateway, topics.gateway_to_agent_topic, 10)
         self._sub_agent = self.create_subscription(Gateway, topics.agent_to_gateway_topic, self._agent_msg_callback, 10)
         self._pub_thing = self.create_publisher(Thing, topics.thing_messages_topic, 10)
+
+        # Graph state bridge: forward ROS graph topics to MQTT for dashboard
+        self._setup_graph_state_bridge()
 
     def _handle_mqtt_message(self, message: MQTTMessage) -> None:
         """
@@ -168,6 +179,103 @@ class MQTT(BaseNode):
 
         except Exception as e:
             self.get_logger().error(f"Failed to handle agent message: {e}")
+
+    def _setup_graph_state_bridge(self) -> None:
+        """Subscribe to ROS graph topics and forward them to MQTT."""
+        try:
+            # /muto/graph_state_json is best_effort (matches daemon publisher)
+            json_qos = QoSProfile(
+                depth=1,
+                reliability=QoSReliabilityPolicy.BEST_EFFORT,
+                durability=QoSDurabilityPolicy.VOLATILE,
+            )
+            self._sub_graph_state = self.create_subscription(
+                StringMsg, "/muto/graph_state_json",
+                self._on_graph_state_json, json_qos,
+            )
+
+            # /muto/graph_drift is reliable + transient_local (matches daemon)
+            drift_qos = QoSProfile(
+                depth=1,
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+            )
+            self._sub_graph_drift = self.create_subscription(
+                GraphDrift, "/muto/graph_drift",
+                self._on_graph_drift, drift_qos,
+            )
+
+            # /muto/graph_events is reliable, volatile
+            event_qos = QoSProfile(
+                depth=50,
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                durability=QoSDurabilityPolicy.VOLATILE,
+            )
+            self._sub_graph_events = self.create_subscription(
+                GraphEvent, "/muto/graph_events",
+                self._on_graph_event, event_qos,
+            )
+
+            self.get_logger().info("Graph state MQTT bridge initialized")
+
+        except Exception as e:
+            self.get_logger().warning(f"Graph state bridge setup failed: {e}")
+
+    def _graph_mqtt_topic(self, suffix: str) -> str:
+        """Build MQTT topic for graph state messages."""
+        return (
+            f"{self._config.mqtt.prefix}/"
+            f"{self._config.mqtt.namespace}:{self._config.mqtt.name}/"
+            f"outbox/graph/{suffix}"
+        )
+
+    def _publish_graph_mqtt(self, suffix: str, payload: str) -> None:
+        """Publish a graph state message to MQTT."""
+        if not self._mqtt_manager or not self._mqtt_manager.is_connected():
+            return
+        topic = self._graph_mqtt_topic(suffix)
+        self._mqtt_manager.publish(topic, payload)
+
+    def _on_graph_state_json(self, msg: StringMsg) -> None:
+        """Forward graph state JSON from ROS to MQTT."""
+        try:
+            self._publish_graph_mqtt("state", msg.data)
+        except Exception as e:
+            self.get_logger().error(f"Failed to forward graph state: {e}")
+
+    def _on_graph_drift(self, msg: GraphDrift) -> None:
+        """Serialize GraphDrift and forward to MQTT."""
+        try:
+            payload = json.dumps({
+                "missing_nodes": list(msg.missing_nodes),
+                "unexpected_nodes": list(msg.unexpected_nodes),
+                "parameter_drifts": list(msg.parameter_drifts),
+                "timestamp": {
+                    "sec": msg.timestamp.sec,
+                    "nanosec": msg.timestamp.nanosec,
+                },
+            })
+            self._publish_graph_mqtt("drift", payload)
+        except Exception as e:
+            self.get_logger().error(f"Failed to forward graph drift: {e}")
+
+    def _on_graph_event(self, msg: GraphEvent) -> None:
+        """Serialize GraphEvent and forward to MQTT."""
+        try:
+            payload = json.dumps({
+                "timestamp": {
+                    "sec": msg.timestamp.sec,
+                    "nanosec": msg.timestamp.nanosec,
+                },
+                "event_type": msg.event_type,
+                "stack_name": msg.stack_name,
+                "node_name": msg.node_name,
+                "node_namespace": msg.node_namespace,
+                "details": msg.details,
+            })
+            self._publish_graph_mqtt("events", payload)
+        except Exception as e:
+            self.get_logger().error(f"Failed to forward graph event: {e}")
 
     def _publish_thing_message(self, payload: dict, channel: str, action: str, meta: MutoActionMeta) -> None:
         """
@@ -284,6 +392,13 @@ class MQTT(BaseNode):
             if self._pub_thing:
                 self.destroy_publisher(self._pub_thing)
                 self._pub_thing = None
+
+            # Clean up graph state bridge subscriptions
+            for sub_name in ("_sub_graph_state", "_sub_graph_drift", "_sub_graph_events"):
+                sub = getattr(self, sub_name, None)
+                if sub:
+                    self.destroy_subscription(sub)
+                    setattr(self, sub_name, None)
 
             self.get_logger().info("MQTT Gateway cleanup completed")
 
